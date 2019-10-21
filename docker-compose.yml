@@ -1,0 +1,66 @@
+version: '3.7'
+services:
+    nginx:
+        build: ./nginx
+        networks:
+            - php-web
+        ports:
+            - "${NGINX_PORT}:${NGINX_PORT}"
+        depends_on:
+            - php-fpm
+        volumes:
+            - ${PROJECT_PATH}:${MOUNT_PATH}
+            - ${NGINX_CONF_PATH}:/etc/nginx/nginx.conf
+            - ${NGINX_CONFD_PATH}:/etc/nginx/conf.d
+            - ${NGINX_LOG_PATH}:/var/log/nginx
+            - ${HOSTS_PATH}:/etc/hosts 
+        command: nginx -g "daemon off;"
+        container_name: nginx   
+    php-fpm:
+        build: ./php-fpm
+        networks:
+            - php-web
+        ports:
+            - ${PHP_7_PORT}
+        volumes:
+            - ${PHP_LOG_PATH}:/var/log/phplog
+            - ${PHP_7_CONF_PATH}:/usr/local/etc/php-fpm.d/www.conf
+            - ${PROJECT_PATH}:${MOUNT_PATH}
+            - ${HOSTS_PATH}:/etc/hosts
+        container_name: php-fpm
+    php-5.4:
+        image: leleos/php-fpm:5.4
+        restart: always
+        networks:
+            - php-web
+        ports:
+            - ${PHP_5_PORT}
+        volumes:
+            - ${PHP_5_CONF_PATH}:/usr/local/etc/php-fpm.conf
+            - ${PROJECT_PATH}:${MOUNT_PATH}
+            - ${PHP_LOG_PATH}:/var/log/phplog
+            - ${HOSTS_PATH}:/etc/hosts
+        container_name: php-5.4      
+    redis:            
+        image: redis:4.0-alpine
+        networks:
+            - php-web
+        ports: 
+            - ${REDIS_PORT}
+        container_name: redis     
+    mysql:
+        image: mysql:5.7.19
+        ports: 
+            - ${MYSQL_PORT}
+        networks:
+            - php-web
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+        volumes:
+            - ${MYSQL_CONF_PATH}:/etc/mysql/conf.d
+            - ${MYSQL_LOGS_PATH}:/var/log/mysql
+            - ${MYSQL_DATA_PATH}:/var/lib/mysql
+        container_name: mysql    
+networks:
+    php-web:
+        name: php-web-net
